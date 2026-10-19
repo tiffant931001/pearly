@@ -1,5 +1,5 @@
 // Pearly 離線快取。改版時把 V 的數字加 1,手機下次打開就會換新版。
-const V = "pearly-v3";
+const V = "pearly-v8";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
