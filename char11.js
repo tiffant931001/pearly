@@ -18,7 +18,7 @@ const org=(id,p)=>{const el=$(id);if(el)el.style.transformOrigin=`${p[0]/VW*100}
 org('greenLw',PIV.pinkL);org('greenRw',PIV.pinkR);org('headG',PIV.head);org('gHead',PIV.head);org('body',PIV.body);
 
 const EO='cubic-bezier(.23,1,.32,1)',EIO='cubic-bezier(.645,.045,.355,1)';
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let RM=(()=>{try{return localStorage.getItem('pearly-anim')==='off'}catch(e){return false}})();
 let RATE=1,defMouth='V',defBlush=false,busy=false,token=0,sleeping=null;
 
 /* ===== Spring channels: every pose change is a spring retarget, so motion is continuous and interruptible ===== */
@@ -113,8 +113,8 @@ function pixShape(x,y,u,kind,col,glow){const g=document.createElementNS('http://
 function pathKF(pts,{s0=.5,s1=1,s2=.6,o0=0}={}){const n=pts.length-1;return pts.map((p,i)=>{const f=i/n;
   return {transform:`translate(${p[0]}px,${p[1]}px) scale(${f<.2?s0+(s1-s0)*f/.2:s1+(s2-s1)*Math.max(0,f-.2)/.8})`,opacity:i===0?o0:(i===n?0:1),offset:Math.min(1,Math.pow(f,.92))}})}
 const GC=['#FF8CC8','#FFB7DD','#E3A6F0','#FFFFFF'];
-function spiralIn(n){for(let i=0;i<n;i++){const a0=Math.random()*Math.PI*2,r0=300+Math.random()*90,dir=Math.random()<.5?1:-1,sw=(1.4+Math.random()*.8)*dir;
-  const x0=CEN[0]+Math.cos(a0)*r0,y0=CEN[1]+Math.sin(a0)*r0*.8;const g=pixShape(x0,y0,5+Math.random()*3,Math.random()<.6?0:(Math.random()<.5?1:2),GC[Math.floor(Math.random()*GC.length)],true);
+function spiralIn(n){for(let i=0;i<n;i++){const a0=Math.random()*Math.PI*2,r0=380+Math.random()*150,dir=Math.random()<.5?1:-1,sw=(1.4+Math.random()*.8)*dir;
+  const x0=CEN[0]+Math.cos(a0)*r0,y0=CEN[1]+Math.sin(a0)*r0*.8;const g=pixShape(x0,y0,7+Math.random()*4,Math.random()<.6?0:(Math.random()<.5?1:2),GC[Math.floor(Math.random()*GC.length)],true);
   const pts=[];for(let k=0;k<=10;k++){const p=k/10,r=r0*Math.pow(1-p,1.15),a=a0+sw*p;pts.push([CEN[0]+Math.cos(a)*r-x0,CEN[1]+Math.sin(a)*r*.8-y0])}
   A(g,pathKF(pts,{s0:.4,s1:1,s2:.4}),{duration:1100+Math.random()*300,delay:i*70,easing:'cubic-bezier(.5,0,.75,.4)'}).finished.then(()=>g.remove()).catch(()=>{})}}
 function heartPts(n){const P=[];for(let i=0;i<n;i++){const t=i/n*Math.PI*2;P.push([HC[0]+16*Math.pow(Math.sin(t),3)*12.5,HC[1]-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))*12.5])}return P}
@@ -133,15 +133,15 @@ async function castMagic(){const T=token,N=130,H=heartPts(N);const pix=$('pix');
   const rot=(v,a)=>[v[0]*Math.cos(a)-v[1]*Math.sin(a),v[0]*Math.sin(a)+v[1]*Math.cos(a)];
   const eo=(x,p)=>1-Math.pow(1-x,p),ei=(x,p)=>Math.pow(x,p);
   const spots=H.map((hp,i)=>{const f=i<=N/2?i/(N/2):(N-i)/(N/2);return [hp[0]+(Math.random()-.5)*12,hp[1]+(Math.random()-.5)*12,f,false]});
-  for(let k=0;k<45;k++){const a=Math.random()*Math.PI*2,r=110+Math.random()*230;spots.push([HC[0]+Math.cos(a)*r,HC[1]+20+Math.sin(a)*r*.8,Math.random(),true])}  // strays passing by
+  for(let k=0;k<45;k++){const a=Math.random()*Math.PI*2,r=150+Math.random()*320;spots.push([HC[0]+Math.cos(a)*r,HC[1]+20+Math.sin(a)*r*.8,Math.random(),true])}  // strays passing by
   for(let k=0;k<25;k++){const a=Math.random()*Math.PI*2,r=40+Math.random()*110;spots.push([HC[0]+Math.cos(a)*r,HC[1]+30+Math.sin(a)*r*.75,.3+Math.random()*.5,true])}  // a sprinkle inside
   spots.forEach(([sx,sy,f,stray],i)=>{const col=i%7===3?'#FFFFFF':hgCol(f);
-    const g=pixShape(CEN[0],CEN[1],stray?3.5+Math.random()*2.5:4+Math.random()*3,i%3===2?1:0,col,i%2===0);hg.appendChild(g);
+    const g=pixShape(CEN[0],CEN[1],stray?5.5+Math.random()*3.5:5+Math.random()*3.5,i%3===2?1:0,col,i%2===0);hg.appendChild(g);
     const a0=Math.random()*Math.PI*2,r0=110+Math.random()*90,st=[Math.cos(a0)*r0,Math.sin(a0)*r0*.8];
     const slot=[sx-CEN[0],sy-CEN[1]],curl=(i%2?1:-1)*(.25+Math.random()*.25);
     const mid=rot([slot[0]*.5,slot[1]*.5],curl);
     let dir=[sx-HC[0],sy-HC[1]-30];const dl=Math.hypot(...dir)||1;dir=[dir[0]/dl,dir[1]/dl];
-    const hold=[slot[0]+dir[0]*8,slot[1]+dir[1]*8],far=240+Math.random()*150,d2=rot(dir,curl*.6),out=[hold[0]+d2[0]*far,hold[1]+d2[1]*far];
+    const hold=[slot[0]+dir[0]*8,slot[1]+dir[1]*8],far=320+Math.random()*220,d2=rot(dir,curl*.6),out=[hold[0]+d2[0]*far,hold[1]+d2[1]*far];
     const kf=[];const P=(p,sc,op,t,e)=>kf.push({transform:`translate(${p[0].toFixed(1)}px,${p[1].toFixed(1)}px) scale(${sc.toFixed(2)})`,opacity:op,offset:t,easing:e||'linear'});
     // 1) gather into the chest (accelerating in)
     P(st,.5,0,0,'linear');P(rot([st[0]*.6,st[1]*.6],.4),.8,1,TG*.5,'linear');P([0,0],.45,1,TG);
@@ -160,7 +160,7 @@ async function castMagic(){const T=token,N=130,H=heartPts(N);const pix=$('pix');
     const fl=document.createElementNS(NS,'circle');fl.setAttribute('cx',CEN[0]);fl.setAttribute('cy',CEN[1]);fl.setAttribute('r',110);fl.setAttribute('fill','url(#pg)');
     fl.style.transformBox='view-box';fl.style.transformOrigin=`${CEN[0]}px ${CEN[1]}px`;hg.appendChild(fl);
     A(fl,[{transform:'scale(.4)',opacity:1},{transform:'scale(1.5)',opacity:0}],{duration:320,easing:EO})},(MAGIC*TG)/RATE);
-  for(let i=0;i<7;i++){const a=Math.random()*Math.PI*2,r=230+Math.random()*80;star(HC[0]+Math.cos(a)*r,HC[1]+Math.sin(a)*r*.8,11+Math.random()*9,MAGIC*TH-120+i*40,700)}
+  for(let i=0;i<11;i++){const a=Math.random()*Math.PI*2,r=280+Math.random()*140;star(HC[0]+Math.cos(a)*r,HC[1]+Math.sin(a)*r*.8,15+Math.random()*12,MAGIC*TH-120+i*40,700)}
   await sleep(MAGIC+200);hg.remove()}
 function dim(on){return;const d=$('dim'),cur=+getComputedStyle(d).opacity;d.animate([{opacity:cur},{opacity:on?.16:0}],{duration:RM?1:(on?420:600),easing:EIO,fill:'forwards'})}
 let coreA=null;function core(on){if(coreA){coreA.cancel();coreA=null}const c=$('core');
@@ -308,7 +308,7 @@ const ACT={
    setPose({by:-2.5,sx:.96,sy:1.05,earL:-3,earR:3,handL:40,handR:-40});kick('sy',2);eyeSparkle(1);await sleep(260);if(T!==token)return;
    setPose({by:-2,sx:1,sy:1});
    cap('付款集氣 3/3：聚集光（放開手指就發射）');core(true);SND.gatherStart();
-   for(let i=0;i<22&&T===token;i++){spiralIn(5);if(i%2===0)SND.twinkle(i>>1);if(i%4===0)eyeSparkle(1);await sleep(220)}},
+   for(let i=0;i<22&&T===token;i++){spiralIn(9);if(i%2===0)SND.twinkle(i>>1);if(i%4===0)eyeSparkle(1);await sleep(220)}},
  async cast(){const T=token;cap('付款施法：聚集 → 炸成愛心 → 飛出去');face({mouth:'V',blush:true});dim(true);
    stopLoopsAudio();SND.suck();core(false);setPose({by:.6,sx:1.1,sy:.88,handL:30,handR:-30});castMagic();await sleep(400);if(T!==token)return;   // pull in for 0.4s (wind-up)
    SND.boom();setTimeout(()=>SND.heart(),550/RATE);setTimeout(()=>SND.fly(),900/RATE);setPose({by:-6,sx:.94,sy:1.08,handL:62,handR:-62,earL:-8,earR:8});kick('earL',-160);kick('earR',160);       // blast
@@ -368,12 +368,12 @@ let lowMood=false,lpOn=false,wasNight=false,curAct=null,mounted=false;
 const LOCK=new Set(['happy','income','guilt','guiltBig','dizzy','gather','cast','wake','night','nightBack']);
 const locked=()=>busy&&LOCK.has(curAct);
 ACT.nightBack=()=>ACT.night(true);
-ACT.greet=()=>IDLE.hello(token);
+ACT.greet=()=>{ding(true);return IDLE.hello(token)};
 let idleT=null;
 function scheduleIdle(){clearTimeout(idleT);idleT=setTimeout(async()=>{
   if(ROOT.isConnected&&!document.hidden&&!busy&&!sleeping&&!RM&&!lpOn){const T=token;const k=['twitch','sway','hello','look','flap'][Math.floor(Math.random()*5)];
     busy=true;curAct='idle';await IDLE[k](T);if(T===token){busy=false;curAct=null;rest();face({})}}
-  scheduleIdle()},4000+Math.random()*4000)}
+  scheduleIdle()},3000+Math.random()*2000)}
 async function run(name){
   if(name!=='wake'&&sleeping){sleeping=null;idleMode='awake';stopLoops(true);popBubble()}
   stopAll();if(name!=='wake')face({bubble:!$('bubble').classList.contains('hide')});
@@ -386,9 +386,13 @@ let taps=0,tapT=null;
 async function hopT(T,h){setPose({by:1.4,sx:1.08,sy:.88});await sleep(70);if(T!==token)return;
   SND.hopUp();setPose({by:-h,sx:.94,sy:1.08});kick('earL',-120);kick('earR',120);await sleep(220);if(T!==token)return;
   SND.land();setPose({by:0,sx:1.08,sy:.9});await sleep(110);if(T!==token)return;setPose({sx:1,sy:1});await sleep(120)}
-async function tapSeq(dz){stopAll();rest();busy=true;curAct=dz?'dizzy':'tap';const T=token;face({mouth:hm2()});
-  spawnStars(3,[250,130,570,330]);await hopT(T,7);if(T!==token)return;
-  if(dz){await ACT.dizzy();if(T!==token)return}else{await sleep(380);if(T!==token)return}
+function ding(strict){if(strict){const c=au();if(!c||c.state!=='running')return}tone(1568,1568,.42,{type:'sine',vol:.30,at:.003});tone(3136,3136,.22,{type:'sine',vol:.07,at:.003});
+  tone(2093,2093,.5,{type:'sine',vol:.28,at:.003,delay:.1});tone(4186,4186,.25,{type:'sine',vol:.06,at:.003,delay:.1})}
+async function tapWave(T){face({mouth:'V'});setPose({handR:8,hr:1});await sleep(110);if(T!==token)return;
+  for(const a of [-36,-16,-34,-14,0]){setPose({handR:a,hr:a?3:0});await sleep(200);if(T!==token)return}}
+async function tapSeq(dz){stopAll();rest();busy=true;curAct=dz?'dizzy':'tap';const T=token;face({mouth:'V'});ding();
+  spawnStars(3,[250,130,570,330]);kick('earL',-200);kick('earR',200);await hopT(T,7);if(T!==token)return;
+  if(dz){await ACT.dizzy();if(T!==token)return}else{kick('earL',-120);kick('earR',120);await tapWave(T);if(T!==token)return;await sleep(160);if(T!==token)return}
   busy=false;curAct=null;rest();face({})}
 $('stage').addEventListener('pointerdown',()=>{if(sleeping||locked()||lpOn)return;kick('sy',-1.4);kick('sx',1.2);kick('earL',-60);kick('earR',60)});
 $('stage').addEventListener('click',()=>{if(lpOn)return;if(window.PCtouch)window.PCtouch();
@@ -409,6 +413,7 @@ window.PC={root:ROOT,
   gather(){wasNight=sleeping==='night';lpOn=true;taps=0;run('gather')},
   cancel(){if(!lpOn)return;lpOn=false;stopAll();busy=false;curAct=null;rest();face({});if(wasNight){wasNight=false;run('nightBack')}},
   cast(){const n=wasNight;wasNight=false;return run('cast').then(()=>{lpOn=false;if(n)run('nightBack')})},
+  motion(on){RM=!on;stopAll();busy=false;curAct=null;rest();face({})},
   sound(on){AU.on=!!on;if(!on){stopLoopsAudio();stopSnore()}}};
 face({});scheduleBlink();scheduleIdle();
 if(window.PCready)window.PCready();
