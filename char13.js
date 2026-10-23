@@ -222,7 +222,7 @@ const SND={
  tap(){say({n:1,base:600,contour:[.4],len:.08,vol:.18})},                                    // "嘿!"
  hello(){say({n:3,base:560,contour:[.1,.35,.2],vowels:'aoi',vol:.2})},                         // "哈囉~"
  dizzy(){say({n:5,base:520,contour:[.3,.1,-.1,-.3,-.5],len:.09,wobble:.08,vol:.18});tone(1568,1568,.2,{type:'sine',vol:.08,delay:.6/RATE})},
- happy(){say({n:4,base:600,contour:[0,.2,.35,.55],len:.065,vol:.2})},
+ softDing(){chime(1568,{vol:.05,dur:.12})},  happy(){say({n:4,base:600,contour:[0,.2,.35,.55],len:.065,vol:.2})},
  income(){say({n:3,base:640,contour:[.2,.45,.7],len:.07,vol:.2});tone(988,988,.1,{type:'sine',vol:.14,delay:.3/RATE});tone(1318,1318,.25,{type:'sine',vol:.14,delay:.4/RATE})},
  guilt(){say({n:2,base:460,contour:[0,-.4],len:.11,vowels:'uu',vol:.16});tone(1500,900,.08,{type:'sine',vol:.14,delay:.38/RATE})},
  guiltBig(){say({n:4,base:480,contour:[.1,-.1,-.3,-.5],len:.11,wobble:.12,vowels:'uaua',vol:.18})},
@@ -269,7 +269,21 @@ const ACT={
  async dizzy(){const T=token;cap('5 下以上：頭暈 > <');face({eyes:'x',mouth:'F'});SND.dizzy();
    for(const a of [-6,6,-5,5,-3,3,0]){setPose({hr:a,earL:a*1.4,earR:a*1.4});await sleep(200);if(T!==token)return}
    await sleep(400);if(T!==token)return;face({})},
- async happy(){const T=token;cap('記帳開心');face({mouth:'V',blush:true});SND.happy();eyeSparkle(3);await hop(8);if(T!==token)return;spawnStars(4);flap(2,9);await hop(5);if(T!==token)return;await sleep(500);if(T!==token)return;face({})},
+ async normal(){const T=token;cap('記帳：一般開心');face({mouth:'V',blush:true});eyeSparkle(1);SND.softDing();
+    setPose({by:1.6,sx:1.1,sy:.86});await sleep(200);if(T!==token)return;
+    SND.pop();setPose({by:-7,sx:.94,sy:1.08});kick('earL',-140);kick('earR',140);spawnStars(5,[180,90,640,420]);flapQ(3,12);
+    await sleep(280);if(T!==token)return;
+    SND.land();setPose({by:0,sx:1.1,sy:.88});await sleep(130);if(T!==token)return;setPose({sx:1,sy:1});await sleep(80);if(T!==token)return;
+    await hop(4,true);if(T!==token)return;await sleep(400);if(T!==token)return;face({})},
+  async special(){const T=token;cap('清空：特別開心');face({mouth:'V',blush:true});
+    setPose({by:1.8,sx:1.12,sy:.85});await sleep(260);if(T!==token)return;             // 小停頓（蓄力）
+    SND.happy();SND.hopUp();setPose({by:-12,sx:.94,sy:1.08});kick('earL',-160);kick('earR',160);await sleep(300);if(T!==token)return;   // 跳起來
+    setPose({by:-12.5,sx:.98,sy:1.03});await sleep(180);if(T!==token)return;           // 空中小停頓
+    eyeSparkle(3);spawnStars(8,[140,70,680,430]);flap(2,9);await sleep(420);if(T!==token)return;   // 閃星星
+    SND.land();setPose({by:0,sx:1.1,sy:.88});await sleep(140);if(T!==token)return;setPose({sx:1,sy:1});await sleep(120);if(T!==token)return;   // 跳下來
+    await sleep(500);if(T!==token)return;face({})},
+  async lookUp(){const T=token;cap('往上看一下卡片');setPose({hy:-2.4,hr:-1.2,earL:3,earR:-3});await sleep(650);if(T!==token)return;setPose({hy:0,hr:0,earL:0,earR:0});await sleep(250)},
+  async happy(){const T=token;cap('記帳開心');face({mouth:'V',blush:true});SND.happy();eyeSparkle(3);await hop(8);if(T!==token)return;spawnStars(4);flap(2,9);await hop(5);if(T!==token)return;await sleep(500);if(T!==token)return;face({})},
  async income(){const T=token;cap('收到收入：開心＋臉紅');face({mouth:'V',blush:true});SND.income();eyeSparkle(2);
    setPose({by:1,sx:1.06,sy:.92});await sleep(200);if(T!==token)return;      // crouch
    setPose({by:-4,sx:.97,sy:1.04,earL:6,earR:-6});spawnStars(5,[180,100,640,360]);await sleep(700);if(T!==token)return;
@@ -317,6 +331,8 @@ const ACT={
    await sleep(900);if(T!==token)return;face({})},
  async payall(){const T=token;await ACT.gather();if(T!==token)return;await sleep(300);if(T!==token)return;await ACT.cast()}
 };
+async function flapQ(n=3,amp=12){setPose({earL:amp*.35,earR:-amp*.35});await sleep(110);
+  for(let i=0;i<n;i++){const d=1-i/n;setPose({earL:-amp*d,earR:amp*d});await sleep(150);setPose({earL:amp*d*.3,earR:-amp*d*.3});await sleep(130)}setPose({earL:0,earR:0})}
 async function hop(h=7,q){setPose({by:1.6,sx:1.1,sy:.86});await sleep(150);   // anticipation: crouch
   if(!q)SND.hopUp();setPose({by:-h,sx:.94,sy:1.08});kick('earL',-120);kick('earR',120);await sleep(230);
   if(!q)SND.land();setPose({by:0,sx:1.08,sy:.9});await sleep(120);setPose({sx:1,sy:1});await sleep(160)}
@@ -365,7 +381,7 @@ const IDLE={
 IDLE.flap=async T=>{await flap(3,11)};
 const hm2=()=>lowMood?'F':'V';
 let lowMood=false,lpOn=false,wasNight=false,curAct=null,mounted=false;
-const LOCK=new Set(['happy','income','guilt','guiltBig','dizzy','gather','cast','wake','night','nightBack']);
+const LOCK=new Set(['normal','special','lookUp','happy','income','guilt','guiltBig','dizzy','gather','cast','wake','night','nightBack']);
 const locked=()=>busy&&LOCK.has(curAct);
 ACT.nightBack=()=>ACT.night(true);
 ACT.greet=()=>{ding(true);return IDLE.hello(token)};
@@ -411,6 +427,7 @@ window.PC={root:ROOT,
   mount(el){if(!el)return;el.replaceWith(ROOT);mounted=true},
   setMood(m){lowMood=!!m.low;defBlush=!!m.blush;defMouth=lowMood?'F':'V';if(!busy&&!sleeping)face({})},
   react(name){if(sleeping==='night'||lpOn)return false;taps=0;run(name);return true},
+  force(name){if(lpOn)return Promise.resolve(false);taps=0;return run(name)},
   doze(){if(sleeping||busy||lpOn)return;run('doze')},
   night(resume){if(sleeping==='night'||lpOn)return;run(resume?'nightBack':'night')},
   wakeQuiet(){if(!sleeping)return;sleeping=null;idleMode='awake';stopAll();stopLoops();stopSnore();show('bubble',false);busy=false;curAct=null;rest();face({})},

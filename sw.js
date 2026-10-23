@@ -1,6 +1,6 @@
 // Pearly 離線快取。改版時把 V 的數字加 1,手機下次打開就會換新版。
-const V = "pearly-v12";
-const CORE = ["./", "./index.html", "./manifest.webmanifest", "./char12.js", "./snd10.js", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
+const V = "pearly-v13";
+const CORE = ["./", "./index.html", "./manifest.webmanifest", "./char13.js", "./snd10.js", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE.map(u => new Request(u, { cache: "reload" }))))); self.skipWaiting(); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim()));
