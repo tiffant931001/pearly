@@ -369,16 +369,21 @@ const LOCK=new Set(['happy','income','guilt','guiltBig','dizzy','gather','cast',
 const locked=()=>busy&&LOCK.has(curAct);
 ACT.nightBack=()=>ACT.night(true);
 ACT.greet=()=>{ding(true);return IDLE.hello(token)};
-let idleT=null;
-function scheduleIdle(){clearTimeout(idleT);idleT=setTimeout(async()=>{
+let idleT=null;const IST={n:0,last:0,act:Date.now(),err:0,fix:0};
+/* 待機：每 4～7 秒一個；動作出錯也一定會排下一個 */
+async function idleTick(){try{
   if(ROOT.isConnected&&!document.hidden&&!busy&&!sleeping&&!RM&&!lpOn){const T=token;const k=['twitch','sway','hello','look','flap'][Math.floor(Math.random()*5)];
-    busy=true;curAct='idle';await IDLE[k](T);if(T===token){busy=false;curAct=null;rest();face({})}}
-  scheduleIdle()},3000+Math.random()*2000)}
+    busy=true;curAct='idle';IST.n++;IST.last=IST.act=Date.now();try{await IDLE[k](T)}catch(e){IST.err++}if(T===token){busy=false;curAct=null;rest();face({})}}
+  }catch(e){IST.err++}scheduleIdle()}
+function scheduleIdle(){clearTimeout(idleT);idleT=setTimeout(idleTick,4000+Math.random()*3000)}
+/* 保護：醒著、在首頁、超過 12 秒完全沒動 → 重置狀態並馬上放一個待機動作 */
+setInterval(()=>{if(!ROOT.isConnected||document.hidden||sleeping||lpOn||RM)return;if(Date.now()-IST.act<12000)return;
+  if(busy){try{stopAll()}catch(e){}busy=false;curAct=null;rest();face({});IST.fix++}IST.act=Date.now();clearTimeout(idleT);idleTick()},2000);
 async function run(name){
   if(name!=='wake'&&sleeping){sleeping=null;idleMode='awake';stopLoops(true);popBubble()}
   stopAll();if(name!=='wake')face({bubble:!$('bubble').classList.contains('hide')});
   if(name!=='wake')rest();
-  CH.idle.t=.35;busy=true;curAct=name;const t=token;
+  CH.idle.t=.35;busy=true;curAct=name;IST.act=Date.now();const t=token;
   try{await ACT[name]()}catch(e){}
   if(t===token){busy=false;curAct=null;if(!sleeping&&name!=='gather'){rest();face({})}CH.idle.t=1}}
 /* 點擊：每一下立刻跳＋星星；第 5 下跳完頭暈；輕點才算（click 本身就排除了滑動） */
@@ -390,7 +395,7 @@ function ding(strict){if(strict){const c=au();if(!c||c.state!=='running')return}
   tone(2093,2093,.5,{type:'sine',vol:.28,at:.003,delay:.1});tone(4186,4186,.25,{type:'sine',vol:.06,at:.003,delay:.1})}
 async function tapWave(T){face({mouth:'V'});setPose({handR:8,hr:1});await sleep(110);if(T!==token)return;
   for(const a of [-36,-16,-34,-14,0]){setPose({handR:a,hr:a?3:0});await sleep(200);if(T!==token)return}}
-async function tapSeq(dz){stopAll();rest();busy=true;curAct=dz?'dizzy':'tap';const T=token;face({mouth:'V'});ding();
+async function tapSeq(dz){stopAll();rest();busy=true;curAct=dz?'dizzy':'tap';IST.act=Date.now();const T=token;face({mouth:'V'});ding();
   spawnStars(3,[250,130,570,330]);kick('earL',-200);kick('earR',200);await hopT(T,7);if(T!==token)return;
   if(dz){await ACT.dizzy();if(T!==token)return}else{kick('earL',-120);kick('earR',120);await tapWave(T);if(T!==token)return;await sleep(160);if(T!==token)return}
   busy=false;curAct=null;rest();face({})}
@@ -409,7 +414,7 @@ window.PC={root:ROOT,
   doze(){if(sleeping||busy||lpOn)return;run('doze')},
   night(resume){if(sleeping==='night'||lpOn)return;run(resume?'nightBack':'night')},
   wakeQuiet(){if(!sleeping)return;sleeping=null;idleMode='awake';stopAll();stopLoops();stopSnore();show('bubble',false);busy=false;curAct=null;rest();face({})},
-  state:()=>({sleeping,busy,act:curAct,lpOn}),
+  state:()=>({sleeping,busy,act:curAct,lpOn,idleN:IST.n,idleLast:IST.last,err:IST.err,fix:IST.fix}),
   gather(){wasNight=sleeping==='night';lpOn=true;taps=0;run('gather')},
   cancel(){if(!lpOn)return;lpOn=false;stopAll();busy=false;curAct=null;rest();face({});if(wasNight){wasNight=false;run('nightBack')}},
   cast(){const n=wasNight;wasNight=false;return run('cast').then(()=>{lpOn=false;if(n)run('nightBack')})},
